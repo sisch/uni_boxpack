@@ -2,16 +2,19 @@
 // ---INCLUDES---
 #include "stdio.h"
 #include "stdlib.h"
+#include "string.h"
+#include "ctype.h"
 
 // ---DATA STRUCTURE---
 typedef struct packet Packet;
+typedef struct container Container;
+
 struct packet {
   int size;
   int index;
   Packet *nextPacket;
 };
 
-typedef struct container Container;
 struct container {
   int size;
   Packet *firstPacket;
@@ -23,6 +26,7 @@ typedef int bool; // Taken from StackOverflow
 #define true 1
 #define false 0
 
+#define len(x)  (sizeof(x)/sizeof((x)[0]))
 // Declare global variables
 Container *container_list;
 
@@ -48,30 +52,63 @@ int result = a;
   return result;
 }
 
+// ---STRUCTURE IMPLEMENTATION---
+void createContainer(int conSize)
+{
+  Container *curContainer;
+  if (container_list == NULL)
+  {
+    container_list = (Container*) malloc(sizeof(Container));
+    container_list->size = conSize;
+    container_list->nextContainer = NULL;
+  }
+  else
+  {
+    curContainer = container_list;
+    while(curContainer->nextContainer != NULL)
+      curContainer = curContainer->nextContainer;
+    Container *newContainer = (Container*) malloc(sizeof(Container));
+    newContainer->size = conSize;
+    newContainer->nextContainer = NULL;
+    curContainer->nextContainer = newContainer;
+  }
+}
+
+void destroyContainer(Container* this)
+{
+  if(this->nextContainer != NULL){
+    printf("Next Exists: %p\n", this);
+    destroyContainer(this->nextContainer);
+  }
+  printf("No Next Exists: %p\n", this);
+  free(this);
+}
+
 // ---FITTING ALGORITHMS---
 // First-Fit
 bool firstFit(int currentPacketSize)
 {
-  Container *curContainer;
-  curContainer = container_list;
+  printf("First-Fit %d\n", currentPacketSize);
+  //Container *curContainer;
+  //curContainer = container_list;
   return false;
 }
 // Best-Fit
-bool bestFit()
+bool bestFit(int currentPacketSize)
 {
-  
+  printf("Best-Fit %d\n", currentPacketSize);
   return false;
 }
 // Next-Fit
-bool nextFit()
+bool nextFit(int currentPacketSize)
 {
-  
+  printf("Next-Fit %d\n", currentPacketSize);
   return false;
 }
 // Almost-Worst-Fit
-bool almostWorstFit()
+bool almostWorstFit(int currentPacketSize)
 {
-  
+  printf("Almost-Worst-Fit %d\n", currentPacketSize);
   return false;
 }
 
@@ -98,17 +135,52 @@ void readInput(char* filename)
   file = fopen(filename, "r");
   if( file != NULL )
   {
+    // -- Read first line
     fgets(line, sizeof(line), file);
-    /* while input data (space-separated) Process Input
-    if(!curFunc())
+    char *val = strtok(line, " "); // Load first value
+    if(val == NULL)
     {
-      printf("validation Failed\n");
-      exit(1);
+      // Error: Wrong input format (line does not start with integer)
     }
-    */
-    printf("#1 %d\n", inlineAddition(26,72));
-    printf("#2 %d\n", inlineSubtraction(26,72));
-
+    while (val != NULL)
+    {
+      int containerSize = atoi(val);
+      createContainer(containerSize);
+      val = strtok(NULL, " "); // Load next value
+    }
+    
+    // -- Read second line
+    fgets(line, sizeof(line), file);
+    val = strtok(line, " ");
+    while (val != NULL)
+    {
+      if(isalpha(val[0]))
+      {
+        if(val[0] == 'f')
+        {
+          curFunc = &firstFit;
+        }
+        else if(val[0] == 'b')
+        {
+          curFunc = &bestFit;
+        }
+        else if(val[0] == 'n')
+        {
+          curFunc = &nextFit;
+        }
+        else if(val[0] == 'a')
+        {
+          curFunc = &almostWorstFit;
+        }
+      }
+      else
+      {
+        int packetSize = atoi(val);
+        curFunc(packetSize);
+      }
+      printf("\n");
+      val = strtok(NULL, " "); // Load next value
+    }
   }
   else {
     printf("Error: File Not Found or Permission Denied");
@@ -122,11 +194,13 @@ void readInput(char* filename)
 
 void init()
 {
-
+  container_list = NULL;
 }
 
 int close()
 {
+  if(container_list != NULL)
+    destroyContainer(container_list);
   return 0;
 }
 
