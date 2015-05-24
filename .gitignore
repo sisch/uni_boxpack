@@ -33,3 +33,6 @@
 
 # PDF
 *.pdf
+
+# offlinetests
+offlinetest/*
