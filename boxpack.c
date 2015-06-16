@@ -5,10 +5,15 @@
 #include "string.h"
 #include "ctype.h"
 
-// ---DATA STRUCTURE---
+// ---FORWARD DECLARATIONS
+typedef int bool; // Taken from StackOverflow
+int close(void);
+bool printContainers(void);
 typedef struct packet Packet;
 typedef struct container Container;
+#define MAXINT 2147483647
 
+// ---DATA STRUCTURE---
 struct packet {
   int size;
   int index;
@@ -17,18 +22,19 @@ struct packet {
 
 struct container {
   int size;
+  int index;
+  int remainingSize;
   Packet *firstPacket;
   Container *nextContainer;
 };
 
 
-typedef int bool; // Taken from StackOverflow
 #define true 1
 #define false 0
-
 #define len(x)  (sizeof(x)/sizeof((x)[0]))
 // Declare global variables
 Container *container_list;
+Container *currentContainerForNextFit;
 
 // ---INLINE ASSEMBLER PART---
 // (Part of the task!!!)
@@ -55,32 +61,75 @@ int result = a;
 // ---STRUCTURE IMPLEMENTATION---
 void createContainer(int conSize)
 {
+//  printf("cC: %d\n", conSize);
   Container *curContainer;
   if (container_list == NULL)
   {
     container_list = (Container*) malloc(sizeof(Container));
+    container_list->index = 0;
     container_list->size = conSize;
-    container_list->nextContainer = NULL;
+    container_list->remainingSize = conSize;
+    container_list->nextContainer = container_list;
+    container_list->firstPacket = NULL;
   }
   else
   {
     curContainer = container_list;
-    while(curContainer->nextContainer != NULL)
+    while(curContainer->nextContainer != container_list)
+    {
       curContainer = curContainer->nextContainer;
+    }
     Container *newContainer = (Container*) malloc(sizeof(Container));
+    newContainer->index = inlineAddition(curContainer->index, 1);
     newContainer->size = conSize;
-    newContainer->nextContainer = NULL;
+    newContainer->remainingSize = conSize;
+    newContainer->nextContainer = container_list;
+    newContainer->firstPacket = NULL;
     curContainer->nextContainer = newContainer;
   }
 }
 
+void createPacket(int currentPacketSize, Container *curContainer)
+{
+  int newIndex = 0;
+  Packet *newPacket = (Packet*) malloc(sizeof(Packet));
+  newPacket->size = currentPacketSize;
+  newPacket->nextPacket = NULL;
+  if(curContainer->firstPacket != NULL)
+  {
+    Packet *lastPacket = curContainer->firstPacket;
+    while (lastPacket->nextPacket != NULL)
+      {
+        newIndex = inlineAddition(newIndex, lastPacket->size);
+        lastPacket = lastPacket->nextPacket;
+      }
+      newPacket->index =  newIndex;
+      lastPacket->nextPacket = newPacket;
+  }
+  else
+  {
+    newPacket->index = newIndex;
+    curContainer->firstPacket = newPacket;
+  }
+  curContainer->remainingSize = inlineSubtraction(curContainer->remainingSize, currentPacketSize);
+}
+void destroyPacket(Packet* this)
+{
+  if(this != NULL)
+  {
+    destroyPacket(this->nextPacket);
+  }
+  free(this);
+}
+
 void destroyContainer(Container* this)
 {
-  if(this->nextContainer != NULL){
-    printf("Next Exists: %p\n", this);
+  destroyPacket(this->firstPacket);
+  if(this->nextContainer != container_list){
+    //printf("Next Exists: %p\n", this);
     destroyContainer(this->nextContainer);
   }
-  printf("No Next Exists: %p\n", this);
+  //printf("No Next Exists: %p\n", this);
   free(this);
 }
 
@@ -88,47 +137,139 @@ void destroyContainer(Container* this)
 // First-Fit
 bool firstFit(int currentPacketSize)
 {
-  printf("First-Fit %d\n", currentPacketSize);
-  //Container *curContainer;
-  //curContainer = container_list;
-  return false;
+  //printf("First-Fit %d\n", currentPacketSize);
+  Container *curContainer = container_list;
+  while(curContainer->remainingSize < currentPacketSize)
+  {
+    if (curContainer->nextContainer == container_list)
+    {
+      return false;
+    }
+    curContainer = curContainer->nextContainer;
+  }
+  createPacket(currentPacketSize, curContainer);
+  return true;
 }
+
 // Best-Fit
 bool bestFit(int currentPacketSize)
 {
-  printf("Best-Fit %d\n", currentPacketSize);
-  return false;
+  // TODO: FIX EVERYTHING
+  Container *bestfitContainer;
+  Container *curContainer;
+  bestfitContainer = container_list;
+  curContainer = container_list;
+  int curRemainingSize = curContainer->remainingSize;
+  int curBestsize = MAXINT;
+  do
+  {
+    if( curRemainingSize >= currentPacketSize
+      && curBestsize > inlineSubtraction(curRemainingSize, currentPacketSize)
+      && inlineSubtraction(curRemainingSize, currentPacketSize) >= 0)
+    {
+      bestfitContainer = curContainer;
+      curBestsize = inlineSubtraction(curContainer->remainingSize, currentPacketSize);
+    }
+    curContainer = curContainer->nextContainer;
+    curRemainingSize = curContainer->remainingSize;
+  } while (curContainer != container_list);
+  if(bestfitContainer->remainingSize < currentPacketSize)
+  {
+    return false; 
+  }
+  createPacket(currentPacketSize, bestfitContainer);
+  return true;
 }
+
 // Next-Fit
 bool nextFit(int currentPacketSize)
 {
-  printf("Next-Fit %d\n", currentPacketSize);
-  return false;
+  Container *curContainer = currentContainerForNextFit;
+  while(curContainer->remainingSize < currentPacketSize)
+  {
+    curContainer = curContainer->nextContainer;
+    if(curContainer == currentContainerForNextFit)
+    {
+      return false;
+    }
+  }
+  currentContainerForNextFit = curContainer;
+  createPacket(currentPacketSize, curContainer);
+  return true;
 }
+
 // Almost-Worst-Fit
 bool almostWorstFit(int currentPacketSize)
 {
-  printf("Almost-Worst-Fit %d\n", currentPacketSize);
-  return false;
+  // Find Container with second most remainingSize
+  Container *maxSizeContainer;
+  Container *max2SizeContainer;
+  Container *curContainer;
+  Container *awfContainer;
+  curContainer = container_list;
+  // maxSizeContainer > max2SizeContainer >= containerSize
+  int maxSize = -1;
+  int max2Size = -1;
+  do
+  {
+    if(curContainer->remainingSize >= currentPacketSize)
+    {
+      if( curContainer->remainingSize > maxSize )
+      {
+        max2Size = maxSize;
+        max2SizeContainer = maxSizeContainer;
+        maxSize = curContainer->remainingSize;
+        maxSizeContainer = curContainer;
+      }
+      else if(curContainer->remainingSize > max2Size)
+      {
+        max2Size = curContainer->remainingSize;
+        max2SizeContainer = curContainer;
+      }
+    }
+    curContainer = curContainer->nextContainer;  
+  } while(curContainer != container_list);
+  createPacket(currentPacketSize, awfContainer);
+  return true;
 }
 
 // ---IO FUNCTIONS---
 // writeOutput prints a correctly formatted output line
-// per container to stdout
-void writeOutput()
+// per container to output file
+bool writeOutput(char *filename)
 {
-
+  FILE *file;
+  file = fopen(filename, "w");
+  char line[1024];
+   
+  Container* c = container_list;
+  do
+  {
+    snprintf(line, 1024, "%d:", c->index);
+    fwrite(line, sizeof(char), strlen(line), file);
+    Packet* p = c->firstPacket;
+    while(p != NULL)
+    {
+      snprintf(line, 1024, " %d", p->size);
+      fwrite(line, sizeof(char), strlen(line), file);
+      p = p->nextPacket;
+    }
+    fwrite("\n", sizeof(char), 1, file);
+    c = c->nextContainer;
+  } while ( c != container_list ) ;
+  fclose(file);
+  return true;
+  //printContainers(); // TODO: replace by writeToFile
 }
 
 // readInput reads two lines
 // will call createContainer n times during the first line
-// will call fillContainer m times during second line
-// TODO: Handle input format errors
-void readInput(char* filename)
+// will call fitFunction m times during second line
+bool readInput(char* filename)
 {
   FILE *file;
   size_t length;
-  char line[1024], *pLine;
+  char line[1024];
   bool (*curFunc)(int);
 
   curFunc = firstFit;
@@ -140,11 +281,15 @@ void readInput(char* filename)
     char *val = strtok(line, " "); // Load first value
     if(val == NULL)
     {
-      // Error: Wrong input format (line does not start with integer)
+      printf("Error: Wrong input format on line 1 (line did not contain spaces)\n");
     }
     while (val != NULL)
     {
       int containerSize = atoi(val);
+      if(containerSize <= 0)
+      {
+        printf("Error: Wrong input format on line 1 (value was not positive integer)\n");
+      }
       createContainer(containerSize);
       val = strtok(NULL, " "); // Load next value
     }
@@ -176,20 +321,28 @@ void readInput(char* filename)
       else
       {
         int packetSize = atoi(val);
-        curFunc(packetSize);
+        //printContainers();
+        if (!curFunc(packetSize))
+        {
+          printf("validation failed\n");
+          fclose(file);
+          return false;
+        }
       }
-      printf("\n");
       val = strtok(NULL, " "); // Load next value
     }
+    //get trailing newline
+    fgets(line, sizeof(line), file);
+    if(!feof(file))
+    {
+      printf("Error: Too many lines in input file.\n");
+    }
+    fclose(file);
   }
   else {
-    printf("Error: File Not Found or Permission Denied");
+    printf("Error: File Not Found or Permission Denied.\n");
   }
-  if(!feof(file))
-  {
-    //Error: Too many lines in input file
-  }
-  fclose(file);
+  return true;
 }
 
 void init()
@@ -204,10 +357,35 @@ int close()
   return 0;
 }
 
+bool printContainers()
+{
+  Container* c = container_list;
+  do
+  {
+    printf("%d:", c->index);
+    Packet* p = c->firstPacket;
+    while(p != NULL)
+    {
+      printf(" %d", p->size);
+      p = p->nextPacket;
+    }
+    printf("\n");
+    c = c->nextContainer;
+  } while ( c != container_list ) ;
+  return true;
+}
 // Program entry
 int main(int argc, char *argv[])
 {
   init();
-  readInput(argv[1]);
+  if (!readInput(argv[1]))
+  {
+    close();
+    return 2;
+  }
+  if(!writeOutput(argv[2]))
+  {
+    return 4;
+  }
   return close();
 }
