@@ -1,4 +1,4 @@
-// Simon,Schliesky
+//Simon,Schliesky,Vx2xQu15AGe4
 // ---INCLUDES---
 #include "stdio.h"
 #include "stdlib.h"
@@ -12,6 +12,9 @@ bool printContainers(void);
 typedef struct packet Packet;
 typedef struct container Container;
 #define MAXINT 2147483647
+//#define DEBUG
+
+
 
 // ---DATA STRUCTURE---
 struct packet {
@@ -207,17 +210,25 @@ bool almostWorstFit(int currentPacketSize)
   Container *curContainer;
   Container *awfContainer;
   curContainer = container_list;
+  maxSizeContainer = NULL;
+  max2SizeContainer = NULL;
   // maxSizeContainer > max2SizeContainer >= containerSize
   int maxSize = -1;
   int max2Size = -1;
   do
   {
+    #ifdef DEBUG
+    printf("Current Container Size: %d, Packet %d\n", curContainer->remainingSize, currentPacketSize);
+    #endif
     if(curContainer->remainingSize >= currentPacketSize)
     {
       if( curContainer->remainingSize > maxSize )
       {
-        max2Size = maxSize;
-        max2SizeContainer = maxSizeContainer;
+        if(maxSizeContainer != NULL)
+        {
+          max2Size = maxSize;
+          max2SizeContainer = maxSizeContainer;
+        }
         maxSize = curContainer->remainingSize;
         maxSizeContainer = curContainer;
       }
@@ -229,6 +240,37 @@ bool almostWorstFit(int currentPacketSize)
     }
     curContainer = curContainer->nextContainer;  
   } while(curContainer != container_list);
+  if(max2SizeContainer != NULL)
+  {
+    awfContainer = max2SizeContainer;
+  }
+  else if(maxSizeContainer != NULL)
+  {
+    awfContainer = maxSizeContainer;
+  }
+  else
+  {
+    return false;
+  }
+  // tie-breaker when max and max2 are equal
+  if(maxSize == max2Size)
+  {
+    if(awfContainer->index > maxSizeContainer->index)
+    {
+      awfContainer = maxSizeContainer;
+    }
+  }
+  if(currentPacketSize > awfContainer->remainingSize)
+  {
+    return false;
+  }
+  #ifdef DEBUG
+  printf("cur %d: conSize %d, packSize %d\n", curContainer->index, curContainer->remainingSize,currentPacketSize);
+  printf("maxS %d: conSize %d, packSize %d\n", maxSizeContainer->index, maxSizeContainer->remainingSize,currentPacketSize);
+  printf("maxS2 %d: conSize %d, packSize %d\n", max2SizeContainer->index, max2SizeContainer->remainingSize,currentPacketSize);
+  printf("awf %d: conSize %d, packSize %d\n", awfContainer->index, awfContainer->remainingSize,currentPacketSize);
+  printf("%d: %d\n",currentPacketSize, awfContainer->remainingSize);
+  #endif
   createPacket(currentPacketSize, awfContainer);
   return true;
 }
@@ -268,7 +310,6 @@ bool writeOutput(char *filename)
 bool readInput(char* filename)
 {
   FILE *file;
-  size_t length;
   char line[1024];
   bool (*curFunc)(int);
 
@@ -299,6 +340,12 @@ bool readInput(char* filename)
     val = strtok(line, " ");
     while (val != NULL)
     {
+      /*if(strcmp(val, " "))
+      {
+        printf("Missing value / possible double space");
+        fclose(file);
+        return false;
+      }*/
       if(isalpha(val[0]))
       {
         if(val[0] == 'f')
@@ -324,7 +371,10 @@ bool readInput(char* filename)
         //printContainers();
         if (!curFunc(packetSize))
         {
-          printf("validation failed\n");
+          #ifdef DEBUG
+          writeOutput("error.log");
+          #endif
+          fprintf(stdout, "validation failed\n");
           fclose(file);
           return false;
         }
@@ -335,12 +385,12 @@ bool readInput(char* filename)
     fgets(line, sizeof(line), file);
     if(!feof(file))
     {
-      printf("Error: Too many lines in input file.\n");
+      fprintf(stderr, "Error: Too many lines in input file.\n");
     }
     fclose(file);
   }
   else {
-    printf("Error: File Not Found or Permission Denied.\n");
+    fprintf(stderr, "Error: File Not Found or Permission Denied.\n");
   }
   return true;
 }
