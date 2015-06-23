@@ -46,7 +46,7 @@ Container *currentContainerForNextFit;
 int inlineAddition(int a, int b)
 {
   int result = a;
-  asm(
+  __asm__(
     "add %1, %0" : "+r"(result) : "r"(b)
     );
   return result;
@@ -55,7 +55,7 @@ int inlineAddition(int a, int b)
 int inlineSubtraction(int a, int b)
 {
 int result = a;
-  asm(
+  __asm__(
     "sub %1, %0" : "+r"(result) : "r"(b)
     );
   return result;
