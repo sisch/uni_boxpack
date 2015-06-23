@@ -1,2 +1,2 @@
 all:
-	gcc -m32 -Wall -Werror -Wshadow -o boxpack boxpack.c
+	gcc -m32 -Wall -Werror -Wshadow -std=c90 -o boxpack boxpack.c
