@@ -310,7 +310,7 @@ bool writeOutput(char *filename)
 bool readInput(char* filename)
 {
   FILE *file;
-  char line[1024];
+  char line[1048576];
   bool (*curFunc)(int);
 
   curFunc = firstFit;
