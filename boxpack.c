@@ -310,15 +310,20 @@ bool writeOutput(char *filename)
 bool readInput(char* filename)
 {
   FILE *file;
-  char line[1024];
+  char *line = NULL;
   bool (*curFunc)(int);
+  size_t length = 0;
+  ssize_t read;
 
   curFunc = firstFit;
   file = fopen(filename, "r");
   if( file != NULL )
   {
     // -- Read first line
-    fgets(line, sizeof(line), file);
+    read = getline(&line, &length, file); // TODO: Replace with getline
+    if(read == -1){
+      printf("Error: Input file does not contain line breaks.");
+    }
     char *val = strtok(line, " "); // Load first value
     if(val == NULL)
     {
@@ -336,7 +341,7 @@ bool readInput(char* filename)
     }
     
     // -- Read second line
-    fgets(line, sizeof(line), file);
+    read = getline(&line, &length, file); // TODO: Replace with getline
     val = strtok(line, " ");
     while (val != NULL)
     {
