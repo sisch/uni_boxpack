@@ -4,6 +4,7 @@
 #include "stdlib.h"
 #include "string.h"
 #include "ctype.h"
+#include "stddef.h"
 
 // ---FORWARD DECLARATIONS
 typedef int bool; // Taken from StackOverflow
