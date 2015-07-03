@@ -37,3 +37,17 @@ boxpack
 
 # offlinetests
 offlinetest/*
+01_offlinetest
+02_offlinetest
+03_offlinetest
+04_offlinetest
+05_offlinetest
+06_offlinetest
+1out
+3out
+4out
+6out
+box64
+error.log
+out
+results.html

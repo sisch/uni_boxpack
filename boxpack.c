@@ -4,6 +4,7 @@
 #include "stdlib.h"
 #include "string.h"
 #include "ctype.h"
+#include "stddef.h"
 
 // ---FORWARD DECLARATIONS
 typedef int bool; // Taken from StackOverflow
@@ -282,7 +283,7 @@ bool writeOutput(char *filename)
 {
   FILE *file;
   file = fopen(filename, "w");
-  char line[1024];
+  char line[4096];
    
   Container* c = container_list;
   do
@@ -318,7 +319,7 @@ bool readInput(char* filename)
   if( file != NULL )
   {
     // -- Read first line
-    fgets(line, sizeof(line), file);
+    fgets(line, sizeof(line), file); // TODO: Replace with getline
     char *val = strtok(line, " "); // Load first value
     if(val == NULL)
     {
@@ -336,7 +337,7 @@ bool readInput(char* filename)
     }
     
     // -- Read second line
-    fgets(line, sizeof(line), file);
+    fgets(line, sizeof(line), file); // TODO: Replace with getline
     val = strtok(line, " ");
     while (val != NULL)
     {
