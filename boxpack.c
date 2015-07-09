@@ -323,14 +323,14 @@ bool readInput(char* filename)
     char *val = strtok(line, " "); // Load first value
     if(val == NULL)
     {
-      printf("Error: Wrong input format on line 1 (line did not contain spaces)\n");
+      fprintf(stderr, "Error: Wrong input format on line 1 (line did not contain spaces)\n");
     }
     while (val != NULL)
     {
       int containerSize = atoi(val);
       if(containerSize <= 0)
       {
-        printf("Error: Wrong input format on line 1 (value was not positive integer)\n");
+        fprintf(stderr, "Error: Wrong input format on line 1 (value was not positive integer)\n");
       }
       createContainer(containerSize);
       val = strtok(NULL, " "); // Load next value
