@@ -389,6 +389,7 @@ bool readInput(char* filename)
       fprintf(stderr, "Error: Too many lines in input file.\n");
     }
     fclose(file);
+    return false;
   }
   else {
     fprintf(stderr, "Error: File Not Found or Permission Denied.\n");
