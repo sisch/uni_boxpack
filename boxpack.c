@@ -301,6 +301,10 @@ bool writeOutput(char *filename)
     snprintf(line, 1024, "%d:", c->index);
     fwrite(line, sizeof(char), strlen(line), file);
     Packet* p = c->firstPacket;
+    if(c->firstPacket == NULL)
+    {
+      snprintf(line, 1024, " %d", 0); 
+    }
     while(p != NULL)
     {
       snprintf(line, 1024, " %d", p->size);
