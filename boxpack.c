@@ -159,6 +159,7 @@ bool firstFit(int currentPacketSize)
     curContainer = curContainer->nextContainer;
   }
   createPacket(currentPacketSize, curContainer);
+  currentContainerForNextFit = curContainer;
   return true;
 }
 
@@ -189,6 +190,7 @@ bool bestFit(int currentPacketSize)
     return false; 
   }
   createPacket(currentPacketSize, bestfitContainer);
+  currentContainerForNextFit = curContainer;
   return true;
 }
 
@@ -280,6 +282,7 @@ bool almostWorstFit(int currentPacketSize)
   printf("%d: %d\n",currentPacketSize, awfContainer->remainingSize);
   #endif
   createPacket(currentPacketSize, awfContainer);
+  currentContainerForNextFit = curContainer;
   return true;
 }
 
@@ -303,6 +306,11 @@ bool writeOutput(char *filename)
       snprintf(line, 1024, " %d", p->size);
       fwrite(line, sizeof(char), strlen(line), file);
       p = p->nextPacket;
+    }
+    if(c->firstPacket == NULL)
+    {
+      snprintf(line, 1024, " 0", NULL); 
+      fwrite(line, sizeof(char), strlen(line), file);
     }
     fwrite("\n", sizeof(char), 1, file);
     c = c->nextContainer;
