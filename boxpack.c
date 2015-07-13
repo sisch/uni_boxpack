@@ -437,10 +437,17 @@ bool printContainers()
   {
     printf("%d:", c->index);
     Packet* p = c->firstPacket;
-    while(p != NULL)
+    if(p == NULL)
     {
-      printf(" %d", p->size);
-      p = p->nextPacket;
+      printf(" 0");
+    }
+    else
+    {
+      while(p != NULL)
+      {
+        printf(" %d", p->size);
+        p = p->nextPacket;
+      }
     }
     printf("\n");
     c = c->nextContainer;
