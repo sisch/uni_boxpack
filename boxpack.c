@@ -97,13 +97,13 @@ void createPacket(int currentPacketSize, Container *curContainer)
       curContainer->lastPacket = curContainer->firstPacket;
     }
     newIndex = inlineAddition(curContainer->lastPacket->index, 1);
-    newPacket->index =  newIndex;
+    newPacket->index = newIndex;
   }
   else
   {
     newPacket->index = 0;
     curContainer->firstPacket = newPacket;
-    curContainer->lastPacket = curContainer->firstPacket;
+    curContainer->lastPacket = newPacket;
     curContainer->remainingSize = inlineSubtraction(curContainer->remainingSize, currentPacketSize);
     return;
   }
@@ -111,19 +111,17 @@ void createPacket(int currentPacketSize, Container *curContainer)
   curContainer->lastPacket->nextPacket = newPacket;
   curContainer->lastPacket = newPacket;
 }
-void destroyPacket(Packet* this)
+
+void destroyPackets(Container* this)
 {
-  if(this == NULL)
-  {
-    return;
-  }
-  Packet* toDestroyNext = this->nextPacket;
-  free(this);
+  Packet* curPacket = this->firstPacket;
+  Packet* toDestroyNext = curPacket->nextPacket;
+  free(curPacket);
   while(toDestroyNext != NULL)
   {
-    this = toDestroyNext->nextPacket;
+    curPacket = toDestroyNext->nextPacket;
     free(toDestroyNext);
-    toDestroyNext = this;
+    toDestroyNext = curPacket;
   }
 }
 
@@ -133,7 +131,7 @@ void destroyContainer(Container* this)
   {
     return;
   }
-  destroyPacket(this->firstPacket);
+  destroyPackets(this);
   Container* toDestroyNext = this->nextContainer;
   free(this);
   while(toDestroyNext != NULL && toDestroyNext != containerList)
