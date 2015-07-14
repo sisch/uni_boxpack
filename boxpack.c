@@ -346,6 +346,8 @@ bool readInput(char* filename)
     if(val == NULL)
     {
       fprintf(stderr, "Error: Wrong input format on line 1 (line did not contain spaces)\n");
+      fclose(file);
+      return false;
     }
     while (val != NULL)
     {
@@ -353,6 +355,8 @@ bool readInput(char* filename)
       if(containerSize <= 0)
       {
         fprintf(stderr, "Error: Wrong input format on line 1 (value was not positive integer)\n");
+        flose(file);
+        return false;
       }
       createContainer(containerSize);
       val = strtok(NULL, " "); // Load next value
