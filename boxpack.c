@@ -351,11 +351,20 @@ bool readInput(char* filename)
     }
     while (val != NULL)
     {
+      for(int i = 0; i < len(val);i++)
+      {
+        if(isalpha(val[i]))
+        {
+          fprintf(stderr, "Error: numbers contain illegal characters\n");
+          fclose(file);
+          return false;
+        }
+      }
       int containerSize = atoi(val);
       if(containerSize <= 0)
       {
         fprintf(stderr, "Error: Wrong input format on line 1 (value was not positive integer)\n");
-        flose(file);
+        fclose(file);
         return false;
       }
       createContainer(containerSize);
