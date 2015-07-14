@@ -351,7 +351,8 @@ bool readInput(char* filename)
     }
     while (val != NULL)
     {
-      for(int i = 0; i < len(val);i++)
+      int i = 0;
+      for(i = 0; i < len(val);i++)
       {
         if(isalpha(val[i]))
         {
@@ -431,7 +432,12 @@ bool readInput(char* filename)
       else
       {
         int packetSize = atoi(val);
-        //printContainers();
+        if(packetSize <= 0)
+        {
+          fprintf(stderr, "Error: packet size is not a positive integer\n");
+          fclose(file);
+          return false;
+        }
         if (!curFunc(packetSize))
         {
           #ifdef DEBUG
