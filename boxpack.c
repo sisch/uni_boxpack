@@ -358,7 +358,7 @@ bool readInput(char* filename)
       int i = 0;
       for(i = 0; i < len(val);i++)
       {
-        if(isalpha(val[i]))
+        if(isalpha(val[i])) //Throws valgrind error on testserver but not locally
         {
           fprintf(stderr, "Error: numbers contain illegal characters\n");
           fclose(file);
@@ -454,18 +454,23 @@ bool readInput(char* filename)
       }
       val = strtok(NULL, " "); // Load next value
     }
-    #ifdef DEBUG
-      puts("After Second line\n");
-    #endif
-    //get trailing line
-    fgets(line, sizeof(line), file);
-    if(!feof(file))
+    int ns = 0;
+    fclose(file);
+    file = fopen(filename, "r");
+    char c;
+    while ((c = fgetc(file) )!= EOF)
     {
-      fprintf(stderr, "Error: Too many lines in input file.\n");
-      fclose(file);
-      return false;
+      if (c == '\n')
+      {
+        ns++;
+      }
     }
     fclose(file);
+    if(ns > 1)
+    {
+      fprintf(stderr, "Error: Too many lines in input file.\n");
+      return false;  
+    }
   }
   else {
     fprintf(stderr, "Error: File Not Found or Permission Denied.\n");
