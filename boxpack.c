@@ -193,7 +193,7 @@ bool bestFit(int currentPacketSize)
     return false; 
   }
   createPacket(currentPacketSize, bestfitContainer);
-  currentContainerForNextFit = curContainer;
+  currentContainerForNextFit = bestfitContainer;
   return true;
 }
 
@@ -201,6 +201,10 @@ bool bestFit(int currentPacketSize)
 bool nextFit(int currentPacketSize)
 {
   Container *curContainer = currentContainerForNextFit;
+  if(curContainer == NULL)
+  {
+    curContainer = containerList;
+  }
   while(curContainer->remainingSize < currentPacketSize)
   {
     curContainer = curContainer->nextContainer;
@@ -285,7 +289,7 @@ bool almostWorstFit(int currentPacketSize)
   printf("%d: %d\n",currentPacketSize, awfContainer->remainingSize);
   #endif
   createPacket(currentPacketSize, awfContainer);
-  currentContainerForNextFit = curContainer;
+  currentContainerForNextFit = awfContainer;
   return true;
 }
 
@@ -453,7 +457,7 @@ bool readInput(char* filename)
     #ifdef DEBUG
       puts("After Second line\n");
     #endif
-    //get trailing newline
+    //get trailing line
     fgets(line, sizeof(line), file);
     if(!feof(file))
     {
