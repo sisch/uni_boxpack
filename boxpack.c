@@ -367,19 +367,49 @@ bool readInput(char* filename)
       {
         if(val[0] == 'f')
         {
+          if(val[1] != 'f')
+          {
+            fprintf(stderr, "Error: Not a valid algo token. Expected ff got %s.\n", val);
+            fclose(file);
+            return false;
+          }
           curFunc = &firstFit;
         }
         else if(val[0] == 'b')
         {
+          if(val[1] != 'f')
+          {
+            fprintf(stderr, "Error: Not a valid algo token. Expected bf got %s.\n", val);
+            fclose(file);
+            return false;
+          }
           curFunc = &bestFit;
         }
         else if(val[0] == 'n')
         {
+          if(val[1] != 'f')
+          {
+            fprintf(stderr, "Error: Not a valid algo token. Expected nf got %s.\n", val);
+            fclose(file);
+            return false;
+          }
           curFunc = &nextFit;
         }
         else if(val[0] == 'a')
         {
+          if(val[1] != 'w' || val[2] != 'f')
+          {
+            fprintf(stderr, "Error: Not a valid algo token. Expected awf got %s.\n", val);
+            fclose(file);
+            return false;
+          }
           curFunc = &almostWorstFit;
+        }
+        else
+        {
+          fprintf(stderr, "Error: Not a valid algo token.\n");
+          fclose(file);
+          return false;
         }
       }
       else
