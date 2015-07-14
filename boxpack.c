@@ -116,13 +116,16 @@ void createPacket(int currentPacketSize, Container *curContainer)
 void destroyPackets(Container* this)
 {
   Packet* curPacket = this->firstPacket;
-  Packet* toDestroyNext = curPacket->nextPacket;
-  free(curPacket);
-  while(toDestroyNext != NULL)
+  if(curPacket != NULL)
   {
-    curPacket = toDestroyNext->nextPacket;
-    free(toDestroyNext);
-    toDestroyNext = curPacket;
+    Packet* toDestroyNext = curPacket->nextPacket;
+    free(curPacket);
+    while(toDestroyNext != NULL)
+    {
+      curPacket = toDestroyNext->nextPacket;
+      free(toDestroyNext);
+      toDestroyNext = curPacket;
+    }  
   }
 }
 
