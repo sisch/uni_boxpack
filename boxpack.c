@@ -311,7 +311,7 @@ bool writeOutput(char *filename)
     }
     if(c->firstPacket == NULL)
     {
-      snprintf(line, 1024, " 0", NULL); 
+      snprintf(line, 1024, " 0"); 
       fwrite(line, sizeof(char), strlen(line), file);
     }
     fwrite("\n", sizeof(char), 1, file);
