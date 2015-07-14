@@ -90,6 +90,7 @@ void createPacket(int currentPacketSize, Container *curContainer)
   Packet *newPacket = malloc(sizeof(Packet));
   newPacket->size = currentPacketSize;
   newPacket->nextPacket = NULL;
+  // If there already is a first packet newPacket will receive index != 0
   if(curContainer->firstPacket != NULL)
   {
     if(curContainer->lastPacket == NULL)
@@ -137,6 +138,7 @@ void destroyContainer(Container* this)
   while(toDestroyNext != NULL && toDestroyNext != containerList)
   {
     this = toDestroyNext->nextContainer;
+    destroyPackets(toDestroyNext);
     free(toDestroyNext);
     toDestroyNext = this;
   }
