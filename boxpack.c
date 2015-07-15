@@ -337,7 +337,7 @@ bool writeOutput(char *filename)
 bool readInput(char* filename)
 {
   FILE *file;
-  char line[1048576];
+  char line[1048576] = "\0";
   bool (*curFunc)(int);
 
   curFunc = firstFit;
@@ -345,7 +345,7 @@ bool readInput(char* filename)
   if( file != NULL )
   {
     // -- Read first line
-    fgets(line, sizeof(line), file); // TODO: Replace with getline
+    fgets(line, sizeof(line)-1, file); // TODO: Replace with getline
     char *val = strtok(line, " "); // Load first value
     if(val == NULL)
     {
@@ -355,7 +355,7 @@ bool readInput(char* filename)
     }
     while (val != NULL)
     {
-      int i = 0;
+      int i;
       for(i = 0; i < len(val);i++)
       {
         if(isalpha(val[i])) //Throws valgrind error on testserver but not locally
@@ -380,7 +380,7 @@ bool readInput(char* filename)
     #endif
     
     // -- Read second line
-    fgets(line, sizeof(line), file); // TODO: Replace with getline
+    fgets(line, sizeof(line)-1, file); // TODO: Replace with getline
     val = strtok(line, " ");
     while (val != NULL)
     {
