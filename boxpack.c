@@ -470,8 +470,6 @@ bool readInput(char* filename)
   firstLine = strtok(input, "\n");
   secondLine = strtok(NULL, "\n");
   firstLine[positionOfN] = '\0';
-  printf("\n\nfirst(%lu): %s\n", strlen(firstLine), firstLine);  
-  printf("second(%lu): %s\n\n", strlen(secondLine), secondLine);  
   char *val = strtok(firstLine, " "); // Load first value
 
   int count = 0;
@@ -482,7 +480,6 @@ bool readInput(char* filename)
   }
   while (val != NULL)
   {
-    printf("%d: \n",count);
     count++;
     #ifdef DEBUG2
     printf("val: %s\n",val);
@@ -492,7 +489,6 @@ bool readInput(char* filename)
       // Assuming only numbers on first line. Check whether there are other characters.
       if(isalpha(val[i]))
       {
-        printf("###%s###",val);
         fprintf(stderr, "Error: numbers contain illegal characters\n");
         return false;
       }
