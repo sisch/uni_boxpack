@@ -37,6 +37,7 @@ struct container {
   int size;
   int index;
   int remainingSize;
+  int numberOfPackets;
   Packet *firstPacket;
   Packet *lastPacket;
   Container *nextContainer;
@@ -83,6 +84,7 @@ void createContainer(int conSize)
   curContainer = malloc(sizeof(Container));
   curContainer->size = conSize;
   curContainer->remainingSize = conSize;
+  curContainer->numberOfPackets = 1; // initialized with one, because output requires 0 printed
   // Upon creation a container is empty, so firstPacket is initialized with NULL
   curContainer->firstPacket = NULL;
   // First container created
@@ -131,12 +133,14 @@ void createPacket(int currentPacketSize, Container *curContainer)
     newPacket->index = 0;
     curContainer->firstPacket = newPacket;
     curContainer->lastPacket = newPacket;
+    curContainer->numberOfPackets = 1;
     curContainer->remainingSize = inlineSubtraction(curContainer->remainingSize, currentPacketSize);
     return;
   }
   curContainer->remainingSize = inlineSubtraction(curContainer->remainingSize, currentPacketSize);
   curContainer->lastPacket->nextPacket = newPacket;
   curContainer->lastPacket = newPacket;
+  curContainer->numberOfPackets = inlineAddition(curContainer->numberOfPackets,1);
 }
 
 // To free memory loop over all packets of a container.
@@ -344,32 +348,60 @@ bool almostWorstFit(int currentPacketSize)
 // per container to output file
 bool writeOutput(char *filename)
 {
-  FILE *file;
-  file = fopen(filename, "w");
-  char line[4096];
-  //loop over all containers and output container index and all packets
+  // How much memory will be needed for output?
+  // 10 digits (MAXINT) for container index
+  // 1 for :
+  // 1 space per packet
+  // x digits (max containersize digits) for packet sizes
+  // 1 for '\n'
+  // per container 12+ (1+x)*packetNumber
+  
+  // calculate memory needs
   Container* c = containerList;
+  int charactersNeededInOutput = 0;
   do
   {
-    snprintf(line, 1024, "%d:", c->index);
-    fwrite(line, sizeof(char), strlen(line), file);
+    charactersNeededInOutput = charactersNeededInOutput + 12 + (1+c->size)*c->numberOfPackets;
+    c = c->nextContainer;
+  }while(c != containerList);
+  char *line = malloc((1+charactersNeededInOutput)*sizeof(char));
+  char *currentChar = line;
+  //loop over all containers and output container index and all packets
+  c = containerList;
+  int shift =0;
+  do
+  {
+    shift = snprintf(currentChar, 12, "%d:", c->index);
+    currentChar += shift;
+    #ifdef DEBUG2
+    printf("currentString: %s\n", line);
+    #endif
     Packet* p = c->firstPacket;
     //loop over the packets
     while(p != NULL)
     {
-      snprintf(line, 1024, " %d", p->size);
-      fwrite(line, sizeof(char), strlen(line), file);
+      shift = snprintf(currentChar, 12, " %d", p->size);
+      currentChar += shift;
       p = p->nextPacket;
     }
     // if there are no packets output 0, even though the task did not specify this
     if(c->firstPacket == NULL)
     {
-      snprintf(line, 1024, " 0"); 
-      fwrite(line, sizeof(char), strlen(line), file);
+      shift = snprintf(currentChar, 3, " 0");
+      currentChar += shift;
     }
-    fwrite("\n", sizeof(char), 1, file);
+    shift = snprintf(currentChar, 2, "\n");
+    currentChar += shift;
     c = c->nextContainer;
   } while ( c != containerList ) ;
+  FILE *file;
+  file = fopen(filename, "w");
+  
+  fwrite(line, sizeof(char), strlen(line), file);
+  #ifdef DEBUG2
+  printf("Final String: %s\n", line);
+  #endif
+  free(line);
   fclose(file);
   return true;
 }
