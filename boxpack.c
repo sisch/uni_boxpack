@@ -43,14 +43,17 @@ struct container {
   Container *nextContainer;
 };
 
-// definitions enabling use of booleans and string length
+// definitions enabling use of booleans
 #define true 1
 #define false 0
-#define len(x)  (sizeof(x)/sizeof((x)[0]))
+
 // Declare global variables
 Container *containerList;
 Container *currentContainerForNextFit;
 Container *mostRecentlyAddedContainer;
+char* inputStart;
+char* firstLineStart;
+char* secondLineStart;
 
 // ---INLINE ASSEMBLER PART---
 // (Part of the task!!!)
@@ -80,6 +83,9 @@ int result = a;
 // and appends it to the existing list or creates one unless it exists.
 void createContainer(int conSize)
 {
+  #ifdef DEBUG2
+  printf("Container created, ");
+  #endif
   Container *curContainer;
   curContainer = malloc(sizeof(Container));
   curContainer->size = conSize;
@@ -278,7 +284,7 @@ bool almostWorstFit(int currentPacketSize)
   do
   {
     #ifdef DEBUG
-    printf("Current Container Size: %d, Packet %d\n", curContainer->remainingSize, currentPacketSize);
+    //printf("Current Container Size: %d, Packet %d\n", curContainer->remainingSize, currentPacketSize);
     #endif
     // if container can hold packet of size currentPacketSize
     // Check also if remainingSize is larger than one of maxSize, max2Size.
@@ -411,154 +417,171 @@ bool writeOutput(char *filename)
 // will call fitFunction m times during second line
 bool readInput(char* filename)
 {
+  #ifdef UnklareAufgabenstellung
+  printf("(╯°□°)╯︵ ┻━┻");
+  #endif
   FILE *file;
-  // Create linebuffer sufficiently large (because of tests)
-  // and initialize with w
-  char line[1048576] = "\0";
-  bool (*curFunc)(int);
-  // start with firstFit if no algo specified
-  curFunc = firstFit;
+  // determine filesize
   file = fopen(filename, "r");
-  if( file != NULL )
+  if(file == NULL)
   {
-    // -- Read first line
-    fgets(line, sizeof(line)-1, file);
-    char *val = strtok(line, " "); // Load first value
-    if(val == NULL)
-    {
-      fprintf(stderr, "Error: Wrong input format on line 1 (line did not contain spaces)\n");
-      fclose(file);
-      return false;
-    }
-    while (val != NULL)
-    {
-      int i;
-      for(i = 0; i < len(val);i++)
-      {
-        // Assuming only numbers on first line. Check whether there are other characters.
-        if(isalpha(val[i]))
-        {
-          fprintf(stderr, "Error: numbers contain illegal characters\n");
-          fclose(file);
-          return false;
-        }
-      }
-      int containerSize = atoi(val);
-      if(containerSize <= 0)
-      {
-        fprintf(stderr, "Error: Wrong input format on line 1 (value was not a positive integer)\n");
-        fclose(file);
-        return false;
-      }
-      createContainer(containerSize);
-      val = strtok(NULL, " "); // Load next value
-    }
-    #ifdef DEBUG
-      puts("Second line\n");
-    #endif
-    
-    // -- Read second line
-    fgets(line, sizeof(line)-1, file);
-    val = strtok(line, " ");
-    while (val != NULL)
-    {
-      //if value begins with character (i.e. not number) assume algo token
-      if(isalpha(val[0]))
-      {
-        if(val[0] == 'f')
-        {
-          if(val[1] != 'f')
-          {
-            fprintf(stderr, "Error: Not a valid algo token. Expected ff got %s.\n", val);
-            fclose(file);
-            return false;
-          }
-          curFunc = &firstFit;
-        }
-        else if(val[0] == 'b')
-        {
-          if(val[1] != 'f')
-          {
-            fprintf(stderr, "Error: Not a valid algo token. Expected bf got %s.\n", val);
-            fclose(file);
-            return false;
-          }
-          curFunc = &bestFit;
-        }
-        else if(val[0] == 'n')
-        {
-          if(val[1] != 'f')
-          {
-            fprintf(stderr, "Error: Not a valid algo token. Expected nf got %s.\n", val);
-            fclose(file);
-            return false;
-          }
-          curFunc = &nextFit;
-        }
-        else if(val[0] == 'a')
-        {
-          if(val[1] != 'w' || val[2] != 'f')
-          {
-            fprintf(stderr, "Error: Not a valid algo token. Expected awf got %s.\n", val);
-            fclose(file);
-            return false;
-          }
-          curFunc = &almostWorstFit;
-        }
-        else
-        {
-          fprintf(stderr, "Error: Not a valid algo token.\n");
-          fclose(file);
-          return false;
-        }
-      }
-      // if value does not begin with character, assume integer (i.e. packet size)
-      else
-      {
-        int packetSize = atoi(val);
-        if(packetSize <= 0)
-        {
-          fprintf(stderr, "Error: packet size is not a positive integer\n");
-          fclose(file);
-          return false;
-        }
-        // Try to add packet with previously specified fitting function.
-        // if false, packet does not fit -> "validation failed"
-        if (!curFunc(packetSize))
-        {
-          #ifdef DEBUG
-          writeOutput("error.log");
-          #endif
-          fprintf(stdout, "validation failed\n");
-          fclose(file);
-          return false;
-        }
-      }
-      val = strtok(NULL, " "); // Load next value
-    }
-    // Next block checks for line-endings. Proper formatting requires exactly 1 \n
-    int ns = 0;
-    fclose(file);
-    file = fopen(filename, "r");
-    char c;
-    while ((c = fgetc(file) )!= EOF)
-    {
-      if (c == '\n')
-      {
-        ns++;
-      }
-    }
-    fclose(file);
-    if(ns != 1)
-    {
-      fprintf(stderr, "Error: Too many lines in input file.\n");
-      return false;  
-    }
-  }
-  else {
-    fprintf(stderr, "Error: File Not Found or Permission Denied.\n");
+    fprintf(stderr, "Error: File not found or permission denied.\n");
     return false;
   }
+  fseek(file, 0, SEEK_END);
+  size_t fsize = ftell(file);
+  fseek(file, 0, SEEK_SET);
+  // Create linebuffer sufficiently large (because of tests)
+  // and initialize with w
+  char *input = malloc(sizeof(char)*(fsize + 1));
+  //size_t readSize = 
+  fread(input, fsize, 1, file);
+  input[fsize] = 0;
+  fclose(file);
+  
+  bool (*curFunc)(int);
+  // start with firstFit if no algo specified
+  curFunc = &firstFit;
+  
+  int i = 0;
+  int positionOfN;
+  int ns = 0;
+  char *c = input;
+  while (c != 0 && i < fsize)
+  { 
+    if (strncmp(c, "\n", 1) == 0)
+    {
+      positionOfN = i;
+      ns++;
+    }
+    c++;
+    i++;
+  }
+  if(ns != 1)
+  {
+    fprintf(stderr, "Error: Too many lines in input file.\n");
+    return false;  
+  }
+  
+  char *firstLine = malloc(positionOfN+1);
+  char *secondLine = malloc(fsize - positionOfN+1);
+  firstLineStart = firstLine;
+  secondLineStart = secondLine;
+  firstLine = strtok(input, "\n");
+  secondLine = strtok(NULL, "\n");
+  firstLine[positionOfN] = '\0';
+  printf("\n\nfirst(%lu): %s\n", strlen(firstLine), firstLine);  
+  printf("second(%lu): %s\n\n", strlen(secondLine), secondLine);  
+  char *val = strtok(firstLine, " "); // Load first value
+
+  int count = 0;
+  if(val == NULL)
+  {
+    fprintf(stderr, "Error: Wrong input format on line 1 (line did not contain spaces)\n");
+    return false;
+  }
+  while (val != NULL)
+  {
+    printf("%d: \n",count);
+    count++;
+    #ifdef DEBUG2
+    printf("val: %s\n",val);
+    #endif
+    for(i = 0; i < strlen(val);i++)
+    {
+      // Assuming only numbers on first line. Check whether there are other characters.
+      if(isalpha(val[i]))
+      {
+        printf("###%s###",val);
+        fprintf(stderr, "Error: numbers contain illegal characters\n");
+        return false;
+      }
+    }
+    int containerSize = atoi(val);
+    if(containerSize <= 0)
+    {
+      fprintf(stderr, "Error: Wrong input format on line 1 (value was not a positive integer)\n");
+      return false;
+    }
+    createContainer(containerSize);
+    val = strtok(NULL, " "); // Load next value
+  }
+  #ifdef DEBUG
+    puts("\nSecond line\n");
+  #endif
+  
+  // -- Read second line
+  val = strtok(secondLine, " ");
+  while (val != NULL)
+  {
+    //if value begins with character (i.e. not number) assume algo token
+    if(isalpha(val[0]))
+    {
+      if(val[0] == 'f')
+      {
+        if(val[1] != 'f')
+        {
+          fprintf(stderr, "Error: Not a valid algo token. Expected ff got %s.\n", val);
+          return false;
+        }
+        curFunc = &firstFit;
+      }
+      else if(val[0] == 'b')
+      {
+        if(val[1] != 'f')
+        {
+          fprintf(stderr, "Error: Not a valid algo token. Expected bf got %s.\n", val);
+          return false;
+        }
+        curFunc = &bestFit;
+      }
+      else if(val[0] == 'n')
+      {
+        if(val[1] != 'f')
+        {
+          fprintf(stderr, "Error: Not a valid algo token. Expected nf got %s.\n", val);
+          return false;
+        }
+        curFunc = &nextFit;
+      }
+      else if(val[0] == 'a')
+      {
+        if(val[1] != 'w' || val[2] != 'f')
+        {
+          fprintf(stderr, "Error: Not a valid algo token. Expected awf got %s.\n", val);
+          return false;
+        }
+        curFunc = &almostWorstFit;
+      }
+      else
+      {
+        fprintf(stderr, "Error: Not a valid algo token.\n");
+        return false;
+      }
+    }
+    // if value does not begin with character, assume integer (i.e. packet size)
+    else
+    {
+      int packetSize = atoi(val);
+      if(packetSize <= 0)
+      {
+        fprintf(stderr, "Error: packet size is not a positive integer\n");
+        return false;
+      }
+      // Try to add packet with previously specified fitting function.
+      // if false, packet does not fit -> "validation failed"
+      if (!curFunc(packetSize))
+      {
+        #ifdef DEBUG
+        writeOutput("error.log");
+        #endif
+        fprintf(stdout, "validation failed\n");
+        return false;
+      }
+    }
+    val = strtok(NULL, " "); // Load next value
+  }
+  // Next block checks for line-endings. Proper formatting requires exactly 1 \n
   return true;
 }
 
@@ -572,6 +595,9 @@ int close()
 {
   if(containerList != NULL)
     destroyContainer(containerList);
+  free(inputStart);
+  free(firstLineStart);
+  free(secondLineStart);
   return 0;
 }
 
