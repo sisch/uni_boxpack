@@ -434,6 +434,7 @@ bool readInput(char* filename)
   // Create linebuffer sufficiently large (because of tests)
   // and initialize with w
   char *input = malloc(sizeof(char)*(fsize + 1));
+  inputStart = input;
   //size_t readSize = 
   fread(input, fsize, 1, file);
   input[fsize] = 0;
