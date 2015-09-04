@@ -1,5 +1,5 @@
 # uni_boxpack
-C project as prerequisite for the final Info II exam
+C project as prerequisite for the final Info II exam.
 
 ## Goal
 ### Story
@@ -36,7 +36,17 @@ boxpack input output
 - no trailing space after last packet
 
 #### Fitting algorithms
-Coming soon ...
+##### First-Fit
+Find the first box that still has 'packet-size' space left and insert packet there.
+
+##### Best-Fit
+Starting from the first, find the box, that leaves the least space after insertion into a box.
+
+##### Next-Fit
+Find the next box (i.e. starting from the one most recently packed) that will fit the current packet.
+
+##### Almost-Worst-Fit
+Find the second-most empty box and insert packet there.
 
 ## License
 This project is currently not licensed and may not be copied or modified in order to achieve admittance to the exam.
