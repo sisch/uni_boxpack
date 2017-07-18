@@ -49,4 +49,4 @@ Find the next box (i.e. starting from the one most recently packed) that will fi
 Find the second-most empty box and insert packet there.
 
 ## License
-CC0. For more information see License.md
+The Unlicense. For more information see License.md
