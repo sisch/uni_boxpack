@@ -49,7 +49,4 @@ Find the next box (i.e. starting from the one most recently packed) that will fi
 Find the second-most empty box and insert packet there.
 
 ## License
-This project is currently not licensed and may not be copied or modified in order to achieve admittance to the exam.
-
-As soon, as it is officially accepted, I will put it under CC0.
-
+CC0. For more information see License.md
